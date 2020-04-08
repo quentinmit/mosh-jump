@@ -1,0 +1,3 @@
+#!/bin/bash
+
+mosh --experimental-remote-ip=local --ssh="$(which mosh-jump-ssh) -h $2" $1

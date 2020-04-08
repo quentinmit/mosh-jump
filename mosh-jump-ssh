@@ -1,0 +1,40 @@
+#!/bin/bash
+
+proxy=""
+host=""
+
+while true; do
+    case "$1" in
+	--)
+	    shift
+	    break
+	    ;;
+	-h)
+	    shift
+	    host="$1"
+	    ;;
+	-*)
+	    ;;
+	*)
+	    proxy="$1"
+	    ;;
+    esac
+    shift
+done
+
+exec 3>&1
+
+#exec >>/tmp/mosh-jump-ssh.log 2>&1
+
+#set -x -v
+
+out=$(ssh -J "$proxy" -tt "$host" -- "$@")
+
+port=$(echo "$out" | grep '^MOSH ' | awk '{ print $3 }')
+key=$(echo "$out" | grep '^MOSH ' | awk '{ print $4 }')
+
+lport=$(( $port + 500 ))
+
+ssh -f "$proxy" sh -c "'nohup ~/go/bin/udpproxy -laddr :$lport -raddr $host:$port &'"
+
+echo MOSH CONNECT "$lport" "$key">&3
